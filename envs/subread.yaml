@@ -1,0 +1,13 @@
+name: subread
+channels:
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=1_gnu
+  - libgcc-ng=9.3.0=h24d8f2e_16
+  - libgomp=9.3.0=h24d8f2e_16
+  - subread=2.0.1=hed695b0_0
+  - zlib=1.2.11=h516909a_1009
+prefix: /data/rajewsky/home/dkoppst/miniconda3/envs/subread

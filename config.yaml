@@ -1,0 +1,59 @@
+# path or URL to sample sheet (TSV format, columns: sample, condition, ...)
+#samples: samples_sars-cov-2.tsv
+# path or URL to sequencing unit sheet (TSV format, columns: sample, unit, fq1, fq2,
+# strandedness). Units are technical replicates (e.g. lanes, or resequencing of the
+# same biological sample).If the column "strandedness" is present (which is optional),
+# can be empty or has one of these values: none, yes or reverse. none is for unstranded
+# protocols, yes an reverse follow the nomenclature used in `htseq-count --reverse`
+# which is referenced in STAR manual section 7, "Counting number of reads per gene".
+
+units: units.tsv
+
+trimming:
+  # skip trimming: false or true
+  skip: false
+  # the sequencing adapter: Illumina universal
+  adapter: AGATCGGAAGAGC
+  polya: A{10}N{30} # see cutadapt documentation for this suggestion
+
+ref:
+  # fasta (for HISAT2)
+  sars_fasta: "/data/rajewsky/genomes/GRCh38_sars-cov-2/GRCh38_sars-cov-2.fa"
+  # the STAR index
+  star_index: "/data/rajewsky/indices/GRCh38_sars-cov-2_star_2.7.8a_overhang150/GenomeDir"
+  # gtf file with transcripts
+  annotation: "/data/rajewsky/genomes/GRCh38_sars-cov-2/gencode.v33.annotation_sars-cov-2.gtf"
+  bwa_index: "/data/rajewsky/indices/GRCh38_sars-cov-2_bwa_0.7.17/GRCh38_sars-cov-2"
+  bowtie_index: "/data/rajewsky/indices/GRCh38_sars-cov-2_bowtie-1.3.0/GRCh38_sars-cov-2_bowtie-1.3.0"
+
+#hisat_dir: "sars2_hisat2_index"
+#sars_prefix: SARSCoV2 # also name in the fasta file
+
+pca:
+  labels:
+    # columns of sample sheet to use for PCA
+    - condition
+
+diffexp:
+  # contrasts for the deseq2 results method
+  contrasts:
+    treated-vs-untreated:
+      - mock-4h
+      - S2-12h
+
+params:
+  star: "--genomeLoad LoadAndRemove " # decrease memory on murphy
+  cutadapt-se: "--minimum-length 15 -q 20 "
+  cutadapt-pe: "--minimum-length 15 -q 20 "
+  cutadapt-se-clontech: >- # c.f. /data/rajewsky/coronavirus/sequencing/smallRNA/WHATIDID.sh
+    --minimum-length 15 --no-indels --times 1 --action trim --error-rate 0.1 --overlap 4 --quality-cutoff 30
+    --quality-base 33 --trim-n --max-n 0 --nextseq-trim 20
+  cutadapt-polya: >- # format with wc
+    --no-indels --minimum-length 18 --times 1 --action trim --error-rate 0.1
+    --overlap 3 --cut 3 --untrimmed-output trimmed/{wc.sample}-{wc.unit}_polya_untrimmed.fastq.gz
+
+snakemake_wrapper_version: "v0.75.0"
+
+runs:
+  vis010: "/data/rajewsky/sequencing/human/210709_A00643_0274_BHG3HHDRXY/210709_A00643_0274_BHG3HHDRXY"
+

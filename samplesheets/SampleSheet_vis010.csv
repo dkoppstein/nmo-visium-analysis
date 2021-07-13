@@ -1,0 +1,26 @@
+[Header],,,,
+IEMFileVersion,4,,,
+InvestigatorName,David Koppstein,,,
+ProjectName,Visium NMOs 010,,,
+Date,6/8/2021,,,
+Workflow,GenerateFASTQ,,,
+Application,FASTQ Only,,,
+Assay,TruSeq Stranded mRNA,,,
+Description,Sequencing,,,
+Chemistry,Amplicon,,,
+,,,,
+[Reads],,,,
+100,,,,
+100,,,,
+,,,,
+[Settings],,,,
+ReverseComplement,0,,,
+BarcodeMismatches,1,,,
+Adapter,,,,
+,,,,
+[Data],,,,
+Sample_ID,Sample_Name,Description,index,index2
+NR_DK_094,Vis010_A1,WT_1,TGCAATGTTC,TTCGACAAGC
+NR_DK_095,Vis010_B1,WT_2,TTAATACGCG,ACCCGAGGTG
+NR_DK_096,Vis010_C1,SOD1_1,CCTTCTAGAG,TCGTTGTATT
+NR_DK_097,Vis010_D1,SOD1_2,GCAGTATAGG,GTGCACGGAA

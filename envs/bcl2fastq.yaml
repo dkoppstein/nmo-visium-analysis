@@ -1,0 +1,16 @@
+name: bcl2fastq
+channels:
+  - bih-cubi
+  - bioconda
+  - conda-forge
+  - defaults
+dependencies:
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=1_gnu
+  - bcl2fastq2=2.20.0.422=2
+  - libgcc=7.2.0=h69d50b8_2
+  - libgcc-ng=9.3.0=h24d8f2e_16
+  - libgomp=9.3.0=h24d8f2e_16
+  - libstdcxx-ng=9.3.0=hdf63c60_16
+  - zlib=1.2.11=h516909a_1009
+prefix: /data/rajewsky/home/dkoppst/miniconda3/envs/bcl2fastq
