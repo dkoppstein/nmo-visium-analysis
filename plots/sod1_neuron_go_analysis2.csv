@@ -1,0 +1,21 @@
+gene;GO.ID;Term;Annotated;Significant;Expected;Fisher
+1;GO:0031115;negative regulation of microtubule polymerization;13;3;0,05;1.3e-05
+2;GO:0001764;neuron migration;145;6;0,53;1.5e-05
+3;GO:0021762;substantia nigra development;42;4;0,15;1.6e-05
+4;GO:0007019;microtubule depolymerization;44;4;0,16;2.0e-05
+5;GO:0007409;axonogenesis;460;9;1,68;4.2e-05
+6;GO:0010977;negative regulation of neuron projection development;130;5;0,48;0.00011
+7;GO:0010976;positive regulation of neuron projection development;148;5;0,54;0.00021
+8;GO:0007417;central nervous system development;965;17;3,53;0.00031
+9;GO:0007212;dopamine receptor signaling pathway;40;3;0,15;0.00042
+10;GO:0048167;regulation of synaptic plasticity;175;5;0,64;0.00045
+11;GO:1990504;dense core granule exocytosis;9;2;0,03;0.00047
+12;GO:0045540;regulation of cholesterol biosynthetic process;43;3;0,16;0.00052
+13;GO:0014009;glial cell proliferation;44;3;0,16;0.00056
+14;GO:0046929;negative regulation of neurotransmitter secretion;10;2;0,04;0.00058
+15;GO:0099519;dense core granule cytoskeletal transport;10;2;0,04;0.00058
+16;GO:0031175;neuron projection development;968;20;3,54;0.00086
+17;GO:0033604;negative regulation of catecholamine secretion;13;2;0,05;0.00100
+18;GO:0001921;positive regulation of receptor recycling;14;2;0,05;0.00117
+19;GO:1900242;regulation of synaptic vesicle endocytosis;15;2;0,05;0.00134
+20;GO:0061484;hematopoietic stem cell homeostasis;15;2;0,05;0.00134

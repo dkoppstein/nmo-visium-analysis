@@ -1,0 +1,3 @@
+spaceranger count --id=vis010-B1 --transcriptome=/data/rajewsky/genomes/refdata-gex-GRCh38-2020-A --fastqs=/data/local/rajewsky/home/dkoppst/src/github.com/dkoppstein/nmo-visium-analysis/workspace/mkfastq/vis010/HG3HHDRXY --sample=vis010-B1 --image=/data/local/rajewsky/home/dkoppst/src/github.com/dkoppstein/nmo-visium-analysis/img/20210616_Vis010_ALSorganoids_TileScan_1_Merging_001_RAW_ch00_b1.tif --slide=V10A23-034 --area=B1 --localcores=16 --localmem=64 --loupe-alignment=/data/local/rajewsky/home/dkoppst/src/github.com/dkoppstein/nmo-visium-analysis/json/V10A23-034-B1_try2.json --r1-length=28 --r2-length=90 
+
+mv vis010-B1 workspace/vis010-B1_run2

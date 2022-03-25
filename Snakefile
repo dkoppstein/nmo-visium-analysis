@@ -20,28 +20,28 @@ RUNS = config["runs"]
 #samples = pd.read_table(config["samples"]).set_index("sample", drop=False)
 #validate(samples, schema="schemas/samples.schema.yaml")
 
-units = pd.read_table(pjoin(workflow.basedir, config["units"]), dtype=str).set_index(["sample", "unit"], drop=False)
-units.index = units.index.set_levels([i.astype(str) for i in units.index.levels])  # enforce str in index
-print(units)
+#units = pd.read_table(pjoin(workflow.basedir, config["units"]), dtype=str).set_index(["sample", "unit"], drop=False)
+#units.index = units.index.set_levels([i.astype(str) for i in units.index.levels])  # enforce str in index
+#print(units)
 
-polya_units = units[units["library_type"] == "polya"]
-clontech_units = units[units["library_type"] == "clontech"]
+#polya_units = units[units["library_type"] == "polya"]
+#clontech_units = units[units["library_type"] == "clontech"]
 #validate(units, schema="schemas/units.schema.yaml")
 
 ##### target rules #####
 
-all_clontech_files = expand("small/{unit.sample}-{unit.unit}_mapped_to_GRCh38.sorted.bam.bai", unit=clontech_units.itertuples())
+#all_clontech_files = expand("small/{unit.sample}-{unit.unit}_mapped_to_GRCh38.sorted.bam.bai", unit=clontech_units.itertuples())
 
-rule all_clontech:
-    input: all_clontech_files
+#rule all_clontech:
+#    input: all_clontech_files
 
-rule all:
-    input:
-        expand("star/{unit.sample}-{unit.unit}/Aligned.out.sorted.bam.bai", unit=polya_units.itertuples()),
-        expand("star/{unit.sample}-{unit.unit}/Aligned.{strand}.bw", unit=polya_units.itertuples(), strand=["forward", "reverse"]),
+#rule all:
+#    input:
+#        expand("star/{unit.sample}-{unit.unit}/Aligned.out.sorted.bam.bai", unit=polya_units.itertuples()),
+#        expand("star/{unit.sample}-{unit.unit}/Aligned.{strand}.bw", unit=polya_units.itertuples(), strand=["forward", "reverse"]),
          #"results/pca.svg",
         #"qc/multiqc_report.html",
-	expand("counts/{library_type}/all_counts_mapped_to_{gtf}.txt", library_type=["polya"], gtf=["gencode"])
+#	expand("counts/{library_type}/all_counts_mapped_to_{gtf}.txt", library_type=["polya"], gtf=["gencode"])
 
 
 rule demux:
@@ -75,18 +75,22 @@ rule multiqc_bcl2fastq:
     wrapper:
         pjoin(SNAKEMAKE_WRAPPER_VERSION, "bio/multiqc")
 
+
+rule mkfastq:
+    
+
 ##### load rules #####
 
-include: "rules/common.smk"
-include: "rules/trim.smk"
-include: "rules/align.smk"
-include: "rules/diffexp.smk"
-include: "rules/qc.smk"
-include: "rules/custom.smk"
-include: "rules/small.smk"
+#include: "rules/common.smk"
+#include: "rules/trim.smk"
+#include: "rules/align.smk"
+#include: "rules/diffexp.smk"
+#include: "rules/qc.smk"
+#include: "rules/custom.smk"
+#include: "rules/small.smk"
 
-rule demux_all:
-    input: expand(str(rules.multiqc_bcl2fastq.output), run=RUNS.keys())
+#rule demux_all:
+#    input: expand(str(rules.multiqc_bcl2fastq.output), run=RUNS.keys())
 
 #rule small_qc:
 #    input:

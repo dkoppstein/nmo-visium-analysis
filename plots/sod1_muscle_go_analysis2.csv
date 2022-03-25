@@ -1,0 +1,21 @@
+GO.ID;Term;Annotated;Significant;Expected;Fisher
+GO:0030049;muscle filament sliding;39;14;0,10;4.9e-28
+GO:0003009;skeletal muscle contraction;45;7;0,11;1.5e-11
+GO:0045214;sarcomere organization;37;6;0,09;3.7e-10
+GO:0030240;skeletal muscle thin filament assembly;6;3;0,01;2.9e-07
+GO:0007517;muscle organ development;310;13;0,77;4.4e-07
+GO:0006937;regulation of muscle contraction;154;8;0,38;5.8e-07
+GO:0060048;cardiac muscle contraction;130;7;0,32;4.9e-06
+GO:0055003;cardiac myofibril assembly;17;3;0,04;9.6e-06
+GO:0071305;cellular response to vitamin D;21;3;0,05;1.9e-05
+GO:0048747;muscle fiber development;52;5;0,13;1.9e-05
+GO:0051592;response to calcium ion;143;5;0,36;2.8e-05
+GO:0071480;cellular response to gamma radiation;27;3;0,07;4.1e-05
+GO:0090131;mesenchyme migration;5;2;0,01;6.1e-05
+GO:0014883;transition between fast and slow fiber;6;2;0,01;9.1e-05
+GO:0070296;sarcoplasmic reticulum calcium ion transport;38;4;0,09;0.00012
+GO:0009612;response to mechanical stimulus;201;5;0,50;0.00014
+GO:0032355;response to estradiol;123;4;0,31;0.00025
+GO:0071313;cellular response to caffeine;10;2;0,02;0.00027
+GO:0043589;skin morphogenesis;11;2;0,03;0.00033
+GO:0055008;cardiac muscle tissue morphogenesis;56;4;0,14;0.00036
