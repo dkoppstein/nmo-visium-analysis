@@ -254,12 +254,26 @@ sampleGOdata <- new("topGOdata", description="SOD1 neuron", ontology="BP",
 
 
 resultFisher <- runTest(sampleGOdata, algorithm = "elim", statistic = "fisher")
+resultKS.elim <- runTest(sampleGOdata, algorithm = "elim", statistic = "ks")
+
 gen_table <- GenTable(sampleGOdata, Fisher = resultFisher, topNodes = 20, numChar = 60)
 #View(gen_table)
 sod1_neuron_go_table <- rownames_to_column(gen_table, var="gene")
 
 readr::write_csv(sod1_neuron_go_table, file = "../plots/sod1_neuron_go_analysis.csv")
 
+pdf("../plots/sod1_neuron_go_analysis_sig1.pdf", 7, 7)
+showSigOfNodes(sampleGOdata, score(resultKS.elim), firstSigNodes = 3, useInfo = 'all')
+dev.off()
+
+```
+
+```{r gen_Table}
+library(knitr)
+library(kableExtra)
+
+k <- knitr::kable(head(gen_table, 5)) %>% kable_styling("striped")
+save_kable(k, "../plots/sod1_test_sig5_striped.png")
 ```
 
 ```{r topgo_muscle}
@@ -369,6 +383,10 @@ sod1_neuron_response_ohne_a <- rownames_to_column(sod1_neuron_response_ohne_a, v
 readr::write_csv(sod1_neuron_response_ohne_a, file = "../plots/sod1_neuron_response_no_a1.csv")
 ```
 
+```{r vlnplot_ohne_a1}
+VlnPlot(vis_merged_ohne_a1, )
+```
+
 ```{r muscle_response_ohne_a1}
 sod1_muscle_response_ohne_a <- FindMarkers(vis_merged_ohne_a, ident.1 = "SOD1_Muscle", ident.2 = "WT_Muscle")
 #View(sod1_neuron_response_ohne_a)
@@ -416,11 +434,6 @@ DimPlot(gouti_combined, reduction = "umap")
 ```
 
 
-```{r cluster_gouti}
-gouti_combined <- RunUMAP(gouti_combined, dims = 1:10)
-DimPlot(gouti_combined, reduction = "umap")
-```
-
 
 ```{r cluster_gouti_renorm}
 gouti_combined <- SCTransform(gouti_combined, verbose = FALSE) %>%
@@ -447,4 +460,430 @@ ggsave("../plots/gouti_combined_dotplot_neural.pdf", height=10, width=10)
 DefaultAssay(vis_merged) <- "predictions"
 SpatialFeaturePlot(vis_merged, features = c("1", "5", "10", "13", "15"), pt.size.factor = 1.6, ncol = 2, crop = TRUE)
 ggsave("../plots/singlecell_predictions_spatial_merged_neurons.pdf", height=20, width=20)
+```
+
+# Vis012 Vis013
+
+Vis012 A1: P838 Xmo-TUJ1 NMO (wt)
+Vis012 B1: P838 Xmo-TUJ1 NMO (wt)
+Vis012 C1: P843 ALS SOD1 wt sMO (d300)
+Vis012 D1: P842 ALS SOD1 mut sNMO (d300)
+
+Vis013 A1: P816 ALS SOD1 wt NMO (d300)
+Vis013 B1: P816 ALS SOD1 wt NMO (d300)
+Vis013 C1: P762 ALS SOD1 mut NMO (d300)
+Vis013 D1: P762 ALS SOD1 mut NMO (d300)
+
+
+```{r import_vis012_c1, message=FALSE, warning=FALSE}
+vis012_c1 <- Seurat::Load10X_Spatial("/data/rajewsky/home/dkoppst/github/nmo-visium-analysis/workspace/vis012-C1/outs/", slice = "WT_SMO")
+plot1 <- VlnPlot(vis012_c1, features = "nCount_Spatial", pt.size = 0.1) + NoLegend()
+plot2 <- SpatialFeaturePlot(vis012_c1, features = "nCount_Spatial") + theme(legend.position = "right")
+wrap_plots(plot1, plot2)
+ggsave("../plots/seurat_ncounts_vis012-c1.pdf")
+vis012_c1 <- SCTransform(vis012_c1, assay = "Spatial", verbose = FALSE)
+vis012_c1$orig.ident <- "WT_SMO"
+vis012_c1$condition <- "WT"
+```
+
+
+```{r import_vis012_d1, message=FALSE, warning=FALSE}
+vis012_d1 <- Seurat::Load10X_Spatial("/data/rajewsky/home/dkoppst/github/nmo-visium-analysis/workspace/vis012-D1/outs/", slice = "MUT_SMO")
+plot1 <- VlnPlot(vis012_d1, features = "nCount_Spatial", pt.size = 0.1) + NoLegend()
+plot2 <- SpatialFeaturePlot(vis012_d1, features = "nCount_Spatial") + theme(legend.position = "right")
+wrap_plots(plot1, plot2)
+ggsave("../plots/seurat_ncounts_vis012-d1.pdf")
+vis012_d1 <- SCTransform(vis012_d1, assay = "Spatial", verbose = FALSE)
+vis012_d1$orig.ident <- "MUT_SMO"
+vis012_d1$condition <- "MUT"
+```
+
+```{r merge_smos, message=FALSE, warning=FALSE}
+merged_smos <- merge(vis012_c1, vis012_d1)
+DefaultAssay(merged_smos) <- "SCT"
+VariableFeatures(merged_smos) <- c(VariableFeatures(vis012_c1), VariableFeatures(vis012_d1))
+merged_smos <- RunPCA(merged_smos, assay = "SCT", verbose = FALSE)
+merged_smos <- FindNeighbors(merged_smos, dims = 1:10)
+# default resolution first
+merged_smos <- FindClusters(merged_smos, resolution=0.2, verbose = FALSE)
+merged_smos <- RunUMAP(merged_smos, reduction = "pca", dims = 1:10)
+DimPlot(merged_smos, reduction = "umap", group.by = c("ident", "condition"))
+ggsave("../plots/merged_smos_dimplot_res020.pdf", height = 16, width = 24)
+```
+
+
+```{r gfap_ttn_smos, include=FALSE}
+FeaturePlot(merged_smos, features = c("GFAP", "TTN"))
+ggsave("../plots/gfap_ttn_features_smos_vis012.pdf", height=20, width=20)
+```
+
+```{r motorneuron_markers_smos}
+motor_markers <- c("CHAT", "ISL1", "FOXP1", "LHX1", "MNX1", "HOXC8", "HOXC9", "HOXC10")
+#Idents(vis_merged) <- "cond.celltype"
+#DefaultAssay(vis_merged) <- "SCT"
+FeaturePlot(merged_smos, features = motor_markers)
+ggsave("../plots/vis012_vis013/motorn_neuron_markers_featureplot_vis012.pdf", height=20, width=20)
+```
+
+```{r spatial_featureplot_gfap}
+SpatialFeaturePlot(merged_smos, features = c("GFAP", "TTN"))
+ggsave("../plots/gfap_spatialfeatureplot_vis012_smos.pdf", height=20, width=20)
+```
+
+```{r spatial_featureplot_gfap}
+SpatialDimPlot(merged_smos, label = FALSE)
+ggsave("../plots/spatialdimplot_smos_vis012_res020.pdf", height=20, width=20)
+```
+
+```{r more_motorneuron_markers}
+more_motorneuron_markers <- c("NEUROG2", "OLIG2", "LHX3", "LHX9", "PAX6", "MAFB")
+FeaturePlot(merged_smos, features=more_motorneuron_markers)
+ggsave("../plots/vis012_vis013/featureplot_smos_vis012_moremarkers.pdf", height=20, width=20)
+```
+
+```{r spatialplot_olig2}
+SpatialFeaturePlot(merged_smos, features=c("OLIG2"))
+ggsave("../plots/vis012_vis013/spatialfeatureplot_smos_vis012_olig2.pdf", height=20, width=20)
+```
+
+```{r markers_smos, include=FALSE}
+merged_smo_markers <- FindAllMarkers(merged_smos, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+cluster_markers_smos <- merged_smo_markers %>%
+    group_by(cluster) %>%
+    top_n(n = 10, wt = avg_log2FC)
+write_csv(cluster_markers_smos, "../plots/vis012_vis013/cluster_markers_smos.csv")
+cluster_markers_smos
+```
+
+```{r merge_day300_sod_nmos, message=FALSE, warning=FALSE}
+merged_smos <- merge(vis012_c1, vis012_d1)
+DefaultAssay(merged_smos) <- "SCT"
+VariableFeatures(merged_smos) <- c(VariableFeatures(vis012_c1), VariableFeatures(vis012_d1))
+merged_smos <- RunPCA(merged_smos, assay = "SCT", verbose = FALSE)
+merged_smos <- FindNeighbors(merged_smos, dims = 1:10)
+# default resolution first
+merged_smos <- FindClusters(merged_smos, resolution=0.2, verbose = FALSE)
+merged_smos <- RunUMAP(merged_smos, reduction = "pca", dims = 1:10)
+DimPlot(merged_smos, reduction = "umap", group.by = c("ident", "condition"))
+ggsave("../plots/vis012_vis013/merged_smos_dimplot_res020.pdf", height = 16, width = 24)
+```
+
+
+```{r import_vis013_a1, message=FALSE, warning=FALSE}
+vis013_a1 <- Seurat::Load10X_Spatial("/data/rajewsky/home/dkoppst/github/nmo-visium-analysis/workspace/vis013-A1/outs/", slice = "WT_SOD_NMO")
+plot1 <- VlnPlot(vis013_a1, features = "nCount_Spatial", pt.size = 0.1) + NoLegend()
+plot2 <- SpatialFeaturePlot(vis013_a1, features = "nCount_Spatial") + theme(legend.position = "right")
+wrap_plots(plot1, plot2)
+ggsave("../plots/seurat_ncounts_vis013-a1.pdf")
+vis013_a1 <- SCTransform(vis013_a1, assay = "Spatial", verbose = FALSE)
+vis013_a1$orig.ident <- "WT_SOD1_NMO_1"
+vis013_a1$condition <- "WT"
+```
+
+```{r import_vis013_b1, message=FALSE, warning=FALSE}
+vis013_b1 <- Seurat::Load10X_Spatial("/data/rajewsky/home/dkoppst/github/nmo-visium-analysis/workspace/vis013-B1/outs/", slice = "WT_SOD_NMO")
+plot1 <- VlnPlot(vis013_b1, features = "nCount_Spatial", pt.size = 0.1) + NoLegend()
+plot2 <- SpatialFeaturePlot(vis013_b1, features = "nCount_Spatial") + theme(legend.position = "right")
+wrap_plots(plot1, plot2)
+ggsave("../plots/seurat_ncounts_vis013-b1.pdf")
+vis013_b1 <- SCTransform(vis013_b1, assay = "Spatial", verbose = FALSE)
+vis013_b1$orig.ident <- "WT_SOD1_NMO_2"
+vis013_b1$condition <- "WT"
+```
+```{r import_vis013_c1, message=FALSE, warning=FALSE}
+vis013_c1 <- Seurat::Load10X_Spatial("/data/rajewsky/home/dkoppst/github/nmo-visium-analysis/workspace/vis013-C1/outs/", slice = "MUT_SOD_NMO")
+plot1 <- VlnPlot(vis013_c1, features = "nCount_Spatial", pt.size = 0.1) + NoLegend()
+plot2 <- SpatialFeaturePlot(vis013_c1, features = "nCount_Spatial") + theme(legend.position = "right")
+wrap_plots(plot1, plot2)
+ggsave("../plots/seurat_ncounts_vis013-c1.pdf")
+vis013_c1 <- SCTransform(vis013_c1, assay = "Spatial", verbose = FALSE)
+vis013_c1$orig.ident <- "MUT_SOD1_NMO_1"
+vis013_c1$condition <- "MUT"
+```
+
+```{r import_vis013_d1, message=FALSE, warning=FALSE}
+vis013_d1 <- Seurat::Load10X_Spatial("/data/rajewsky/home/dkoppst/github/nmo-visium-analysis/workspace/vis013-D1/outs/", slice = "MUT_SOD_NMO")
+plot1 <- VlnPlot(vis013_d1, features = "nCount_Spatial", pt.size = 0.1) + NoLegend()
+plot2 <- SpatialFeaturePlot(vis013_d1, features = "nCount_Spatial") + theme(legend.position = "right")
+wrap_plots(plot1, plot2)
+ggsave("../plots/seurat_ncounts_vis013-d1.pdf")
+vis013_d1 <- SCTransform(vis013_d1, assay = "Spatial", verbose = FALSE)
+vis013_d1$orig.ident <- "MUT_SOD1_NMO_2"
+vis013_d1$condition <- "MUT"
+```
+
+```{r merge_day300_nmos, message=FALSE, warning=FALSE}
+merged_dt_nmos <- merge(vis013_a1, vis013_b1)
+merged_dt_nmos <- merge(merged_dt_nmos, vis013_c1)
+merged_dt_nmos <- merge(merged_dt_nmos, vis013_d1)
+DefaultAssay(merged_dt_nmos) <- "SCT"
+```
+
+```{r feature_day300_nmos}
+merged_dt_nmos <- PercentageFeatureSet(merged_dt_nmos, "^MT-", col.name="percent_mito")
+VlnPlot(merged_dt_nmos, features = c("nCount_Spatial", "nFeature_Spatial", "percent_mito"), pt.size = 0.1, ncol = 3) + NoLegend()
+ggsave("../plots/vis012_vis013/seurat_features_vis013.pdf")
+```
+```{r filter_d300}
+merged_dt_nmos <- merged_dt_nmos[, merged_dt_nmos$nFeature_Spatial > 500 & merged_dt_nmos$percent_mito < 20]
+```
+
+```{r variable_etc_d300}
+VariableFeatures(merged_dt_nmos) <- c(VariableFeatures(vis013_a1), VariableFeatures(vis013_b1), VariableFeatures(vis013_c1), VariableFeatures(vis013_d1))
+merged_dt_nmos <- RunPCA(merged_dt_nmos, assay = "SCT", verbose = FALSE)
+merged_dt_nmos <- FindNeighbors(merged_dt_nmos, dims = 1:10)
+# low resolution first
+merged_dt_nmos <- FindClusters(merged_dt_nmos, resolution=0.25, verbose = FALSE)
+merged_dt_nmos <- RunUMAP(merged_dt_nmos, reduction = "pca", dims = 1:10)
+DimPlot(merged_dt_nmos, reduction = "umap", group.by = c("ident", "condition"))
+ggsave("../plots/vis012_vis013/merged_d300_nmos_dimplot_res025.pdf", height = 16, width = 24)
+```
+
+
+
+```{r plot_d300_counts}
+SpatialDimPlot(merged_dt_nmos) + theme(legend.position = "right")
+ggsave("../plots/vis012_vis013/merged_d300_nmos_spatialdim_res025.pdf", height = 16, width = 24)
+```
+
+
+
+```{r markers_nmos_d00, include=FALSE}
+merged_nmo_marker_dt <- FindAllMarkers(merged_dt_nmos, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+cluster_markers_nmos <- merged_nmo_marker_dt %>%
+    group_by(cluster) %>%
+    top_n(n = 10, wt = avg_log2FC)
+write_csv(cluster_markers_nmos, "../plots/vis012_vis013/merged_d300_nmos_cluster_markers.csv")
+cluster_markers_nmos
+```
+
+```{r diffexp_nmo_dt_muscle}
+merged_dt_nmos <- RenameIdents(merged_dt_nmos, '1' = 'Neuron')
+merged_dt_nmos$cond.celltype <- paste(merged_dt_nmos$condition, Idents(merged_dt_nmos), sep = "_")
+Idents(merged_dt_nmos) <- "cond.celltype"
+```
+
+```{r diffexp_nmo_dt_neuron}
+sod1_neuron_response_dt <- FindMarkers(merged_dt_nmos, ident.1 = "MUT_Neuron", ident.2 = "WT_Neuron")
+sod1_neuron_response_dt_csv <- rownames_to_column(sod1_neuron_response_dt, var="gene")
+readr::write_csv(sod1_neuron_response_dt_csv, file = "../plots/vis012_vis013/sod1_neuron_response_d300.csv")
+sod1_neuron_response_dt_csv
+```
+
+```{r diffexp_neuron_dt3}
+
+VlnPlot(merged_dt_nmos, features = c("SFRP2", "TUBB2B", "TUBA1A", "HMGCS1", "JPT1", "UCHL1", "MARCKSL1"))
+ggsave("../plots/vis012_vis013/prev_neuron_diffexp_vlnplot_d300_nmos.pdf", height=20, width=20)
+```
+
+
+```{r feature_day300_nmos_per_cluster}
+Idents(merged_dt_nmos) <- "ident"
+merged_dt_nmos <- PercentageFeatureSet(merged_dt_nmos, "^MT-", col.name="percent_mito")
+VlnPlot(merged_dt_nmos, features = c("nCount_Spatial", "nFeature_Spatial", "percent_mito"), pt.size = 0.1, ncol = 3) + NoLegend()
+ggsave("../plots/seurat_features_vis013.pdf")
+```
+
+```{r import_vis012_a1, message=FALSE, warning=FALSE}
+vis012_a1 <- Seurat::Load10X_Spatial("/data/rajewsky/home/dkoppst/github/nmo-visium-analysis/workspace/vis012-A1/outs/", slice = "CTRL_NMO_1")
+plot1 <- VlnPlot(vis012_a1, features = "nCount_Spatial", pt.size = 0.1) + NoLegend()
+plot2 <- SpatialFeaturePlot(vis012_a1, features = "nCount_Spatial") + theme(legend.position = "right")
+wrap_plots(plot1, plot2)
+ggsave("../plots/seurat_ncounts_vis012-a1.pdf")
+vis012_a1 <- SCTransform(vis012_a1, assay = "Spatial", verbose = FALSE)
+vis012_a1$orig.ident <- "CTRL_NMO_1"
+vis012_a1$condition <- "CTRL"
+```
+
+```{r import_vis012_b1, message=FALSE, warning=FALSE}
+vis012_b1 <- Seurat::Load10X_Spatial("/data/rajewsky/home/dkoppst/github/nmo-visium-analysis/workspace/vis012-B1/outs/", slice = "CTRL_NMO_2")
+plot1 <- VlnPlot(vis012_b1, features = "nCount_Spatial", pt.size = 0.1) + NoLegend()
+plot2 <- SpatialFeaturePlot(vis012_b1, features = "nCount_Spatial") + theme(legend.position = "right")
+wrap_plots(plot1, plot2)
+ggsave("../plots/seurat_ncounts_vis012-b1.pdf")
+vis012_b1 <- SCTransform(vis012_b1, assay = "Spatial", verbose = FALSE)
+vis012_b1$orig.ident <- "CTRL_NMO_1"
+vis012_b1$condition <- "CTRL"
+```
+
+```{r merge_control_nmos}
+merged_ctrl_nmos <- merge(vis012_a1, vis012_b1)
+DefaultAssay(merged_ctrl_nmos) <- "SCT"
+VariableFeatures(merged_ctrl_nmos) <- c(VariableFeatures(vis012_a1), VariableFeatures(vis012_b1))
+```
+
+```{r ctrl_mito}
+merged_ctrl_nmos <- PercentageFeatureSet(merged_ctrl_nmos, "^MT-", col.name="percent_mito")
+VlnPlot(merged_ctrl_nmos, features = c("nCount_Spatial", "nFeature_Spatial", "percent_mito"), pt.size = 0.1, ncol = 3) + NoLegend()
+ggsave("../plots/seurat_features_ctrl_nmos.pdf")
+```
+
+```{r filter_d300}
+merged_ctrl_nmos <- merged_ctrl_nmos[, merged_ctrl_nmos$nFeature_Spatial > 500 & merged_ctrl_nmos$percent_mito < 15]
+```
+
+```{r process_merged_ctrl_nmos}
+merged_ctrl_nmos <- RunPCA(merged_ctrl_nmos, assay = "SCT", verbose = FALSE)
+merged_ctrl_nmos <- FindNeighbors(merged_ctrl_nmos, dims = 1:10)
+# default resolution first
+merged_ctrl_nmos <- FindClusters(merged_ctrl_nmos, resolution=0.25, verbose = FALSE)
+merged_ctrl_nmos <- RunUMAP(merged_ctrl_nmos, reduction = "pca", dims = 1:10)
+DimPlot(merged_ctrl_nmos, reduction = "umap", group.by = c("ident", "condition"))
+ggsave("../plots/merged_ctrl_nmos_dimplot_res025.pdf", height = 16, width = 24)
+```
+
+
+
+```{r ctrl_spatialplot}
+SpatialFeaturePlot(merged_ctrl_nmos, features = c("GFAP", "TTN"))
+ggsave("../plots/vis012_vis013/seurat_gfap_ttn_merged_ctrl_nmos.pdf")
+```
+
+```{r ctrl_spatialplot}
+SpatialDimPlot(merged_ctrl_nmos, group.by = c("ident"))
+ggsave("../plots/vis012_vis013/merged_ctrl_nmo_ident_plot_res025.pdf")
+```
+
+
+```{r markers_ctrl_nmo, include=FALSE}
+merged_ctrl_nmo_marker <- FindAllMarkers(merged_ctrl_nmos, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+cluster_markers_ctrl_nmos <- merged_ctrl_nmo_marker %>%
+    group_by(cluster) %>%
+    top_n(n = 10, wt = avg_log2FC)
+write_csv(cluster_markers_ctrl_nmos, "../plots/vis012_vis013/merged_ctrl_nmo_markers.csv")
+cluster_markers_ctrl_nmos
+```
+
+
+```{r anchor_ctrls}
+anchors <- FindTransferAnchors(reference = gouti_combined, query = merged_ctrl_nmos, normalization.method = "SCT")
+predictions.assay <- TransferData(anchorset = anchors, refdata = gouti_combined$seurat_clusters, prediction.assay = TRUE, weight.reduction = merged_ctrl_nmos[["pca"]], dims = 1:10)
+merged_ctrl_nmos[["predictions"]] <- predictions.assay
+```
+
+
+```{r predict_id_ctrls}
+merged_ctrl_nmos$predicted.id <- GetTransferPredictions(merged_ctrl_nmos)
+Idents(merged_ctrl_nmos) <- "predicted.id"
+SpatialDimPlot(merged_ctrl_nmos, cells.highlight = CellsByIdentities(object = merged_ctrl_nmos, idents = c("5")))
+ggsave("../plots/vis012_vis013/cluster_five_ctrl_organoids.pdf", height=10, width=10) 
+
+```
+
+```{r dotplot_gouti_neuron}
+neural_markers <- c("EFNB3", "PAX6", "HES5", "HOPX", "FABP7", "HES6", "DLL3", "ASCL1", "NHLH1", 
+                                     "ELAVL4", "ELAVL3", "STMN2", "NSG2", "TWIST1", "COL5A1", "SERPINF1", 
+                                     "PDGFRA", "PDGFRB", "GFAP")
+DotPlot(gouti_combined, features = neural_markers) + RotatedAxis()
+ggsave("../plots/gouti_combined_dotplot_neural.pdf", height=10, width=10) 
+```
+```{r dotplot_gouti_muscle}
+muscle_markers <- c("PAX7", "PITX2", "MSC", "MKI67", "MYF5", "SYTL2", "MYMX", "SGCA", "MYOD1", "MYOG", "CDH15", "CHRNB1", "CHRND", "TTN", "MYBPH", "ACTA1", "ACTN2", "UNC45B")
+DotPlot(gouti_combined, features = muscle_markers) + RotatedAxis()
+ggsave("../plots/vis012_vis013/gouti_combined_dotplot_muscle.pdf", height=10, width=10) 
+```
+
+
+```{r predictions}
+DefaultAssay(merged_ctrl_nmos) <- "predictions"
+SpatialFeaturePlot(merged_ctrl_nmos, features = c("1", "2", "3", "4", "5"), pt.size.factor = 1.6, ncol = 2, crop = TRUE)
+ggsave("../plots/singlecell_predictions_spatial_merged_neurons_ctrl_nmos_1-5.pdf", height=20, width=20)
+```
+
+```{r predictions_6}
+DefaultAssay(merged_ctrl_nmos) <- "predictions"
+SpatialFeaturePlot(merged_ctrl_nmos, features = c("6", "7", "8", "9", "10"), pt.size.factor = 1.6, ncol = 2, crop = TRUE)
+ggsave("../plots/singlecell_predictions_spatial_merged_neurons_ctrl_nmos_1-5.pdf", height=20, width=20)
+```
+
+```{r dotplot_ctrls_neuron}
+DotPlot(merged_ctrl_nmos, features = neural_markers) + RotatedAxis()
+ggsave("../plots/vis012_vis013/ctrl_nmos_neural_markers.pdf", height=20, width=20)
+
+```
+
+```{r dotplot_gouti_muscle}
+muscle_markers <- c("PAX7", "PITX2", "MSC", "MKI67", "MYF5", "SYTL2", "SGCA", "MYOD1", "MYOG", "CDH15", "CHRNB1", "CHRND", "TTN", "MYBPH", "ACTA1", "ACTN2", "UNC45B")
+DotPlot(gouti_combined, features = muscle_markers) + RotatedAxis()
+ggsave("../plots/gouti_combined_dotplot_muscle.pdf", height=10, width=10) 
+```
+
+
+```{r dotplot_ctrls_muscle}
+DotPlot(merged_ctrl_nmos, features = muscle_markers) + RotatedAxis()
+ggsave("../plots/vis012_vis013/ctrl_nmos_muscle_markers.pdf", height=20, width=20)
+
+```
+
+```{r what_is_cluster_three}
+cluster_three_genes <- cluster_markers_ctrl_nmos %>% dplyr::filter(cluster == 3) %>% dplyr::select(gene)
+cluster_three_genes <- cluster_three_genes$gene
+DotPlot(gouti_combined, features = cluster_three_genes) + RotatedAxis()
+ggsave("../plots/vis012_vis013/gouti_combined_dotplot_cluster_three_genes.pdf", height=10, width=10)
+
+```
+
+```{r dotplot_ctrls_cluster_three}
+DotPlot(merged_ctrl_nmos, features = cluster_three_genes) + RotatedAxis()
+ggsave("../plots/vis012_vis013/cluster_three_markers_dotplot.pdf")
+```
+
+```{r dotplot_ctrls_cluster_three}
+FeaturePlot(merged_ctrl_nmos, features = motor_markers) + RotatedAxis()
+ggsave("../plots/vis012_vis013/ctrl_nmo_motor_markers.pdf", height=10, width=10)
+```
+
+# Comparison of Vis010 c1 and d1 to Vis012 control NMOs a1 and B1
+
+```{r vis_ctrl_sod1_merged}
+vis_ctrl_merged <- merge(vis_c1, vis_d1)
+vis_ctrl_merged <- merge(vis_ctrl_merged, vis012_a1)
+vis_ctrl_merged <- merge(vis_ctrl_merged, vis012_b1)
+DefaultAssay(vis_ctrl_merged) <- "SCT"
+VariableFeatures(vis_ctrl_merged) <- c(VariableFeatures(vis_c1), VariableFeatures(vis_d1), VariableFeatures(vis012_a1), VariableFeatures(vis012_b1))
+vis_ctrl_merged <- RunPCA(vis_ctrl_merged, assay = "SCT", verbose = FALSE)
+vis_ctrl_merged <- FindNeighbors(vis_ctrl_merged, dims = 1:10)
+# low resolution first
+vis_ctrl_merged <- FindClusters(vis_ctrl_merged, resolution = 0.04, verbose = FALSE)
+vis_ctrl_merged <- RunUMAP(vis_ctrl_merged, reduction = "pca", dims = 1:10)
+DimPlot(vis_ctrl_merged, reduction = "umap", group.by = c("ident", "condition"))
+ggsave("../plots/vis012_vis013/vis_ctrl_sod1_comparison_dimplot_res010.pdf", height = 16, width = 24)
+```
+```{r check_markers}
+vis_ctrl_markers <- FindAllMarkers(vis_ctrl_merged, only.pos = TRUE, min.pct = 0.25, logfc.threshold = 0.25)
+cluster_markers_ctrl_vs_sod1_nmos <- vis_ctrl_markers %>%
+    group_by(cluster) %>%
+    top_n(n = 10, wt = avg_log2FC)
+write_csv(cluster_markers_ctrl_vs_sod1_nmos, "../plots/vis012_vis013/sod1_d50_vs_ctrl_vis013_markers.csv")
+cluster_markers_ctrl_vs_sod1_nmos
+```
+
+
+
+```{r diffexp_sod1_d50_vs_ctrl_neuron}
+vis_ctrl_merged <- RenameIdents(vis_ctrl_merged, '0' = 'Muscle', '1' = 'Neuron')
+vis_ctrl_merged$cond.celltype <- paste(vis_ctrl_merged$condition, Idents(vis_ctrl_merged), sep = "_")
+Idents(vis_ctrl_merged) <- "cond.celltype"
+
+sod1_neuron_response_vs_ctrl <- FindMarkers(vis_ctrl_merged, ident.1 = "SOD1_Neuron", ident.2 = "CTRL_Neuron")
+sod1_neuron_response_vs_ctrl_csv <- rownames_to_column(sod1_neuron_response_vs_ctrl, var="gene")
+readr::write_csv(sod1_neuron_response_vs_ctrl_csv, file = "../plots/vis012_vis013/sod1_d50_vs_ctrl__neuron_diffexp.csv")
+sod1_neuron_response_vs_ctrl_csv
+```
+
+```{r top9_d50_vs_ctrl}
+VlnPlot(vis_ctrl_merged, features = head(sod1_neuron_response_vs_ctrl_csv$gene, 9), ncol = 3)
+ggsave("../plots/vis012_vis013/sod1_d50_vs_ctrl_nmos_neuron_diffexp_top9.pdf", height=20, width=20)
+```
+
+```{r diffexp_sod1_d50_vs_ctrl_neuron}
+sod1_muscle_response_vs_ctrl <- FindMarkers(vis_ctrl_merged, ident.1 = "SOD1_Muscle", ident.2 = "CTRL_Muscle")
+sod1_muscle_response_vs_ctrl <- rownames_to_column(sod1_muscle_response_vs_ctrl, var="gene")
+readr::write_csv(sod1_muscle_response_vs_ctrl, file = "../plots/vis012_vis013/sod1_d50_vs_ctrl_muscle_diffexp.csv")
+sod1_muscle_response_vs_ctrl
+```
+
+```{r top9_d50_vs_ctrl_muscle}
+VlnPlot(vis_ctrl_merged, features = head(sod1_muscle_response_vs_ctrl$gene, 9), ncol = 3)
+ggsave("../plots/vis012_vis013/sod1_d50_vs_ctrl_nmos_muscle_diffexp_top9.pdf", height=20, width=20)
 ```
